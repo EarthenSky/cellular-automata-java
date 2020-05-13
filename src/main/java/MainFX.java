@@ -1,10 +1,8 @@
 import javafx.application.Application;
 
 import javafx.scene.Scene;
-import javafx.scene.Group;
+//import javafx.scene.Group;
 
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Button;
@@ -12,7 +10,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.Menu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
+//import javafx.scene.control.TextField;
 
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -25,44 +23,36 @@ import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+//import javafx.event.EventHandler;
 
 
 // launch class
 public class MainFX extends Application {
-
-    public final static int CANVAS_SIZE = 640;      // in px
+    
     public final static int WINDOW_WIDTH = 1280;    // in px
     public final static int GAP = 16;               // in px
 
-    public final static int DEFAULT_GRID_SIZE = 32;      // in px
+    private Menu gridSizeMenu;
 
-    private int grid_size = DEFAULT_GRID_SIZE;
+    private GridCanvas gridCanvas;
 
     // this guy starts the everything
     public static void main(String[] args) {
         Application.launch();  // no resize?
     }
 
-    //public Label gridSizeLabel;
-    private Menu gridSizeMenu;
-
     // this one does the heavy lifting
     @Override
     public void start(Stage stage) throws Exception {
-        stage.setTitle("Cellular Automa Sim");
+        stage.setTitle("Cellular Automata!");
 
         // ****************************************************************** //
 
         // 2d graphics view
 
-        final Canvas canvas = new Canvas(CANVAS_SIZE, CANVAS_SIZE);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gridCanvas = new GridCanvas();
 
-        gc.setFill(Color.BLUE);
-        gc.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-        StackPane leftArea = new StackPane(canvas);
+        StackPane leftArea = new StackPane( gridCanvas.getCanvas() );
         leftArea.setAlignment(Pos.CENTER);
 
         // ****************************************************************** //
@@ -77,13 +67,14 @@ public class MainFX extends Application {
         buttonGridSize.setHideOnClick(false);
         buttonGridSize.setContent( new HBox(doubleButton, halveButton) );
 
-        gridSizeMenu = new Menu("Grid Size = " + grid_size);
+        gridSizeMenu = new Menu("Grid Size = " + gridCanvas.grid_size);
         gridSizeMenu.getItems().add(buttonGridSize);
 
         Menu settings = new Menu("Settings");
         settings.getItems().addAll(gridSizeMenu);
 
         MenuItem refreshGrid = new MenuItem("Refresh Grid");
+        refreshGrid.setOnAction( gridCanvas::flushCanvas );
 
         Menu gridOptions = new Menu("Grid Options");
         gridOptions.getItems().addAll(refreshGrid);
@@ -119,7 +110,7 @@ public class MainFX extends Application {
         mainBox.add(leftArea, 0, 0, 1, 1);
         mainBox.add(rightBox, 1, 0, 1, 1);
         
-        Scene scene = new Scene(mainBox, WINDOW_WIDTH, CANVAS_SIZE + GAP * 2, Color.WHITE);
+        Scene scene = new Scene(mainBox, WINDOW_WIDTH, GridCanvas.CANVAS_SIZE + GAP * 2, Color.WHITE);
         stage.setScene(scene);
 
         stage.show();
@@ -127,20 +118,17 @@ public class MainFX extends Application {
 
 
     private void handleDoubleButton(ActionEvent actionEvent) {
-        grid_size = grid_size * 2;
-        gridSizeMenu.setText("Set Grid Size = " + grid_size);
+        gridCanvas.grid_size *= 2;
+        gridSizeMenu.setText("Grid Size = " + gridCanvas.grid_size);
     }
 
     private void handleHalveButton(ActionEvent actionEvent) {
-        grid_size = grid_size / 2;
-        if(grid_size == 0) {
-            grid_size = 1;
+        gridCanvas.grid_size /= 2;
+        if(gridCanvas.grid_size == 0) {
+            gridCanvas.grid_size = 1;
         }
 
-        gridSizeMenu.setText("Set Grid Size = " + grid_size);
+        gridSizeMenu.setText("Grid Size = " + gridCanvas.grid_size);
     }
-
-
-    // function to do canvas updates
 
 }
