@@ -1,29 +1,24 @@
 import javafx.application.Application;
-
-import javafx.scene.Scene;
-//import javafx.scene.Group;
-
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Button;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.Menu;
-import javafx.scene.control.CustomMenuItem;
-import javafx.scene.control.MenuItem;
-//import javafx.scene.control.TextField;
-
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
-
-import javafx.stage.Stage;
-import javafx.geometry.Pos;
-import javafx.geometry.Insets;
-
 import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+//import javafx.scene.Group;
+import javafx.scene.control.Button;
+import javafx.scene.control.CustomMenuItem;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 
 // launch class
@@ -32,9 +27,12 @@ public class MainFX extends Application {
     public final static int WINDOW_WIDTH = 1280;    // in px
     public final static int GAP = 16;               // in px
 
-    private Menu gridSizeMenu;
+    private Menu gridSizeMenu;  // todo: make this not a variable
 
-    private GridCanvas gridCanvas;
+    private CanvasManager canvasManager = new CanvasManager();
+    private Simulation simulation = new Simulation();
+
+    private String program = "";
 
     // this guy starts the everything
     public static void main(String[] args) {
@@ -50,9 +48,7 @@ public class MainFX extends Application {
 
         // 2d graphics view
 
-        gridCanvas = new GridCanvas();
-
-        StackPane leftArea = new StackPane( gridCanvas.getCanvas() );
+        StackPane leftArea = new StackPane( canvasManager.getCanvas() );
         leftArea.setAlignment(Pos.CENTER);
 
         // ****************************************************************** //
@@ -67,19 +63,49 @@ public class MainFX extends Application {
         buttonGridSize.setHideOnClick(false);
         buttonGridSize.setContent( new HBox(doubleButton, halveButton) );
 
-        gridSizeMenu = new Menu("Grid Size = " + gridCanvas.grid_size);
+        gridSizeMenu = new Menu("Grid Size = " + canvasManager.gridSize);
         gridSizeMenu.getItems().add(buttonGridSize);
 
         Menu settings = new Menu("Settings");
         settings.getItems().addAll(gridSizeMenu);
 
         MenuItem refreshGrid = new MenuItem("Refresh Grid");
-        refreshGrid.setOnAction( gridCanvas::flushCanvas );
+        refreshGrid.setOnAction( canvasManager::flushCanvas );
 
         Menu gridOptions = new Menu("Grid Options");
         gridOptions.getItems().addAll(refreshGrid);
+
+        TextField randomNoiseLimitField = new TextField( Float.toString(simulation.randomNoiseLimit) );
+        randomNoiseLimitField.textProperty().addListener( (observable, oldValue, newValue) -> {
+                try {
+                    simulation.randomNoiseLimit = Float.valueOf( newValue );
+                } catch(NumberFormatException nfe) {
+                    randomNoiseLimitField.setText(oldValue);
+                }
+            } );
+
+        CustomMenuItem randomNoiseLimit = new CustomMenuItem();
+        randomNoiseLimit.setHideOnClick(false);
+        randomNoiseLimit.setContent(randomNoiseLimitField);
+
+        Button randomNoiseGenerateButton = new Button( "Generate" );
+        randomNoiseGenerateButton.setOnAction( (actionEvent) -> {
+                canvasManager.flushCanvas();
+                simulation.applyBinaryRandomNoise();
+                canvasManager.renderGridToCanvas(simulation);
+            } );
+
+        CustomMenuItem randomNoiseGenerate = new CustomMenuItem();
+        randomNoiseGenerate.setHideOnClick(false);
+        randomNoiseGenerate.setContent(randomNoiseGenerateButton);
+
+        Menu randomNoiseMenu = new Menu("Random Noise");
+        randomNoiseMenu.getItems().addAll( randomNoiseLimit, randomNoiseGenerate  );
+
+        Menu generate = new Menu("Generate");
+        generate.getItems().addAll(randomNoiseMenu);
         
-        MenuBar menuBar = new MenuBar(settings, gridOptions);
+        MenuBar menuBar = new MenuBar(settings, gridOptions, generate);
 
         // ****************************************************************** //
 
@@ -110,7 +136,7 @@ public class MainFX extends Application {
         mainBox.add(leftArea, 0, 0, 1, 1);
         mainBox.add(rightBox, 1, 0, 1, 1);
         
-        Scene scene = new Scene(mainBox, WINDOW_WIDTH, GridCanvas.CANVAS_SIZE + GAP * 2, Color.WHITE);
+        Scene scene = new Scene(mainBox, WINDOW_WIDTH, CanvasManager.CANVAS_SIZE + GAP * 2, Color.WHITE);
         stage.setScene(scene);
 
         stage.show();
@@ -118,17 +144,20 @@ public class MainFX extends Application {
 
 
     private void handleDoubleButton(ActionEvent actionEvent) {
-        gridCanvas.grid_size *= 2;
-        gridSizeMenu.setText("Grid Size = " + gridCanvas.grid_size);
+        canvasManager.gridSize *= 2;
+
+        gridSizeMenu.setText("Grid Size = " + canvasManager.gridSize);
+        simulation.updateGrid(canvasManager.gridSize);
     }
 
     private void handleHalveButton(ActionEvent actionEvent) {
-        gridCanvas.grid_size /= 2;
-        if(gridCanvas.grid_size == 0) {
-            gridCanvas.grid_size = 1;
+        canvasManager.gridSize /= 2;
+        if(canvasManager.gridSize == 0) {
+            canvasManager.gridSize = 1;
         }
 
-        gridSizeMenu.setText("Grid Size = " + gridCanvas.grid_size);
+        gridSizeMenu.setText("Grid Size = " + canvasManager.gridSize);
+        simulation.updateGrid(canvasManager.gridSize);
     }
 
 }

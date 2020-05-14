@@ -1,0 +1,46 @@
+@init  # initial conditions
+
+def randomNoise foreach node do
+    export perlinNoise 
+end
+
+
+@auto  # defining celluar automata behaviours
+
+def clustering do
+
+
+end
+
+
+
+
+## Notes ##
+- For generating maps, the programmers must have access to mathematical functions through libraries.
+- For writing automatas, programmers need to write code which will be parallelizable and have access to some 
+mathematical functions as well. Code will be written as singular fragments which output singular encapsulated values.
+
+////////////////////////////////
+
+Programmers must define what a grid node is, and how a grid node should be rendered i.e. what kinds of values correspond 
+to different colours / visual representations.
+
+Programmers also define the code to apply on a single cell, and the initial starting conditions.
+
+This means that in order to create a cellular automata simulation, the programmer must write 4 sections of code. (plus 
+1 informal section, which I might make a section for ease of use)
+
+Sections:
+ 1. Grid node / cell definition
+ 2. Render definition
+ 3. Cellular Automata process (vertex shader?)
+ 4. Initial Condition Generating code
+ 5. Linking the above 4 sections together -> usually done through gui.
+ 
+
+Section 1 -> could be done with a custom interpereter / compiler since it will not need much code.
+
+Section 2 -> gonna want a scripting language with math functions
+
+Section 3 -> want a fast scripting language that i can run on the gpu. -> consider writing a language layer overtop of a 
+shader language so that i can do some basic text insertions and stuff, then upload it to the gpu. 
